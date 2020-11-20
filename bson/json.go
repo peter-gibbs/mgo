@@ -182,6 +182,16 @@ func jdecDate(data []byte) (interface{}, error) {
 		return nil, fmt.Errorf("cannot parse date: %q [%s]", v.S, strings.Join(errs, ", "))
 	}
 
+	// peter-gibbs - Handle date format from python
+	var vv struct {
+		N int64 `json:"$date"`
+	}
+	err := jdec(data, &vv)
+	if err == nil {
+		n := vv.N
+		return time.Unix(n/1000, n%1000*1e6).UTC(), nil
+	}
+
 	var vn struct {
 		Date struct {
 			N int64 `json:"$numberLong,string"`
