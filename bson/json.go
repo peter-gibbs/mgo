@@ -200,7 +200,7 @@ func jdecDate(data []byte) (interface{}, error) {
 			S int64
 		} `json:"$dateFunc"`
 	}
-	err := jdec(data, &vn)
+	err = jdec(data, &vn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse date: %q", data)
 	}
