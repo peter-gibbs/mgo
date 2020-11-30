@@ -70,6 +70,8 @@ func init() {
 	funcExt.DecodeConst("undefined", Undefined)
 
 	jsonExt.DecodeKeyed("$regex", jdecRegEx)
+	// peter-gibbs - Handle canonical regex from python
+	jsonExt.DecodeKeyed("$regularExpression", jdecRegEx)
 	jsonExt.EncodeType(RegEx{}, jencRegEx)
 
 	funcExt.DecodeFunc("ObjectId", "$oidFunc", "Id")
@@ -244,7 +246,26 @@ func jdecRegEx(data []byte) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return RegEx{v.Regex, v.Options}, nil
+	if v.Regex != "" {
+		return RegEx{v.Regex, v.Options}, nil
+	}
+
+	// peter-gibbs - Handle canonical regex from python '$regularExpression{pattern,options}'
+	var vc struct {
+		Regex struct {
+			Pattern string `json:"pattern"`
+			Options string `json:"options"`
+		} `json:"$regularExpression"`
+	}
+	err = jdec(data, &vc)
+	if err != nil {
+		return nil, err
+	}
+	if vc.Regex.Pattern != "" {
+		return RegEx{vc.Regex.Pattern, vc.Regex.Options}, nil
+	}
+
+	return nil, fmt.Errorf("invalid regex object: %s", data)
 }
 
 func jencRegEx(v interface{}) ([]byte, error) {
