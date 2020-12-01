@@ -344,14 +344,21 @@ func jdecNumberLong(data []byte) (interface{}, error) {
 
 // peter-gibbs - Handle canonical numberInt from python
 func jdecNumberInt(data []byte) (interface{}, error) {
-	var v struct {
+	var vs struct {
+		N int32 `json:"$numberInt,string"`
+	}
+	var vn struct {
 		N int32 `json:"$numberInt"`
 	}
-	err := jdec(data, &v)
-	if err != nil {
-		return nil, err
+	err := jdec(data, &vs)
+	if err == nil {
+		return vs.N, nil
 	}
-	return v.N, nil
+	err = jdec(data, &vn)
+	if err == nil {
+		return vn.N, nil
+	}
+	return nil, err
 }
 
 func jencNumberLong(v interface{}) ([]byte, error) {
