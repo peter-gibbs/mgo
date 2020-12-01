@@ -87,6 +87,8 @@ func init() {
 	jsonExt.DecodeKeyed("$numberLongFunc", jdecNumberLong)
 	jsonExt.EncodeType(int64(0), jencNumberLong)
 	jsonExt.EncodeType(int(0), jencInt)
+	// peter-gibbs - Handle canonical numberInt from python
+	jsonExt.DecodeKeyed("$numberInt", jdecNumberInt)
 
 	funcExt.DecodeConst("MinKey", MinKey)
 	funcExt.DecodeConst("MaxKey", MaxKey)
@@ -338,6 +340,18 @@ func jdecNumberLong(data []byte) (interface{}, error) {
 		return v.N, nil
 	}
 	return v.Func.N, nil
+}
+
+// peter-gibbs - Handle canonical numberInt from python
+func jdecNumberInt(data []byte) (interface{}, error) {
+	var v struct {
+		N int32 `json:"$numberInt"`
+	}
+	err := jdec(data, &v)
+	if err != nil {
+		return nil, err
+	}
+	return v.N, nil
 }
 
 func jencNumberLong(v interface{}) ([]byte, error) {
