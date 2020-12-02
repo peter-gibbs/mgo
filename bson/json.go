@@ -87,8 +87,10 @@ func init() {
 	jsonExt.DecodeKeyed("$numberLongFunc", jdecNumberLong)
 	jsonExt.EncodeType(int64(0), jencNumberLong)
 	jsonExt.EncodeType(int(0), jencInt)
-	// peter-gibbs - Handle canonical numberInt from python
+	// peter-gibbs - Handle canonical numberInt
 	jsonExt.DecodeKeyed("$numberInt", jdecNumberInt)
+	// peter-gibbs - Handle canonical numberDouble
+	jsonExt.DecodeKeyed("$numberDouble", jdecNumberDouble)
 
 	funcExt.DecodeConst("MinKey", MinKey)
 	funcExt.DecodeConst("MaxKey", MaxKey)
@@ -342,7 +344,7 @@ func jdecNumberLong(data []byte) (interface{}, error) {
 	return v.Func.N, nil
 }
 
-// peter-gibbs - Handle canonical numberInt from python
+// peter-gibbs - Handle canonical numberInt
 func jdecNumberInt(data []byte) (interface{}, error) {
 	var vs struct {
 		N int32 `json:"$numberInt,string"`
@@ -357,6 +359,20 @@ func jdecNumberInt(data []byte) (interface{}, error) {
 	err = jdec(data, &vn)
 	if err == nil {
 		return vn.N, nil
+	}
+	return nil, err
+}
+
+// peter-gibbs - Handle canonical numberDouble
+// TODO Do we need to do anything to handle infinity/NaN?
+//      {"$numberDouble": <"Infinity"|"-Infinity"|"NaN"> }
+func jdecNumberDouble(data []byte) (interface{}, error) {
+	var vs struct {
+		N float64 `json:"$numberDouble,string"`
+	}
+	err := jdec(data, &vs)
+	if err == nil {
+		return vs.N, nil
 	}
 	return nil, err
 }
